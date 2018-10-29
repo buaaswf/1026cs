@@ -9,14 +9,14 @@ n = size(boxes,1);
 ims = mdnet_extract_regions(img, boxes, opts);
 nBatches = ceil(n/opts.batchSize_test);
 
-t = tcpip('219.224.168.43', 54377, 'Timeout', 60,'InputBufferSize',10240);%连接这个ip和这个端口的UDP服务器
+t = tcpip('localhost', 54377, 'Timeout', 60,'InputBufferSize',10240);%连接这个ip和这个端口的UDP服务器
 for i=1:nBatches
 %     fprintf('extract batch %d/%d...\n',i,nBatches);
     
     batch = ims(:,:,:,opts.batchSize_test*(i-1)+1:min(end,opts.batchSize_test*i));
     bak =batch;
     batch = batch(:,:,:,end-10:end);
-    save batch.mat batch;
+    save ('batch.mat', 'batch','-v6');
     ori = '/home/swf/swfcode/matlab/Vital_release-master/tracking/batch.mat'
     data_all=['/home/swf/swfcode/gan/pytorch-CycleGAN-and-pix2pix-master/'];%用于存储所有的数据
 %t.BytesAvailableFcnMode='byte'

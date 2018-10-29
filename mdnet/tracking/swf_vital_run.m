@@ -21,7 +21,7 @@ if(opts.bbreg)
     r = overlap_ratio(pos_examples,targetLoc);
     pos_examples = pos_examples(r>0.6,:);
     pos_examples = pos_examples(randsample(end,min(opts.bbreg_nSamples,end)),:);
-    feat_conv = mdnet_features_convX(net_conv, img, pos_examples, opts);
+    feat_conv = gan_mdnet_features_convX(net_conv, img, pos_examples, opts);
     
     X = permute(gather(feat_conv),[4,3,1,2]);
     X = X(:,:);
@@ -50,7 +50,30 @@ pos_idx = 1:size(pos_examples,1);
 neg_idx = (1:size(neg_examples,1)) + size(pos_examples,1);
 
 % extract conv3 features
-feat_conv = mdnet_features_convX(net_conv, img, examples, opts);
+feat_conv = gan_mdnet_features_convX(net_conv, img, examples, opts);
+
+
+
+% [L,N] = superpixels(img,50);
+% feat_conv2 = mdnet_features_convX(net_conv,im2double(img).*double(L), examples, opts);
+% feat_conv = 0.5*feat_conv+0.5*feat_conv2.*feat_conv;
+
+% level=graythresh(img);
+% bw=im2bw(img,level);
+% 
+% lowrank = bw;
+% % lowrankgradient=lowrank;
+% % [featureVector,hogVisualization] = extractHOGFeatures(img);
+% % plot(hogVisualization);
+% % saveas(gcf,'img.png');
+% % hogVisualization1=imread('img.png');
+% feat_conv2 = mdnet_features_convX(net_conv,im2double(img).*double(lowrank), examples, opts);
+% %feat_conv2 = mdnet_features_convX(net_conv,im2double(hogVisualization1), examples, opts);
+
+%feat_conv = 0.5*feat_conv+0.5*feat_conv2.*feat_conv;
+
+
+
 pos_data = feat_conv(:,:,:,pos_idx);
 neg_data = feat_conv(:,:,:,neg_idx);
 
@@ -62,7 +85,12 @@ net_fc = mdnet_finetune_hnm(net_fc,pos_data,neg_data,opts,...
 
 net_G = G_pretrain(net_fc, net_G, pos_data, opts_net);
 
+
+
+
+
 %% Initialize displayots
+% display=0
 if display
     figure(2);
     set(gcf,'Position',[200 100 600 400],'MenuBar','none','ToolBar','none');
@@ -89,7 +117,7 @@ examples = [pos_examples; neg_examples];
 pos_idx = 1:size(pos_examples,1);
 neg_idx = (1:size(neg_examples,1)) + size(pos_examples,1);
 
-feat_conv = mdnet_features_convX(net_conv, img, examples, opts);
+feat_conv = gan_mdnet_features_convX(net_conv, img, examples, opts);
 total_pos_data{1} = feat_conv(:,:,:,pos_idx);
 total_neg_data{1} = feat_conv(:,:,:,neg_idx);
 
@@ -108,7 +136,16 @@ for To = 2:nFrames;
     %% Estimation
     % draw target candidates
     samples = gen_samples('gaussian', targetLoc, opts.nSamples, opts, trans_f, scale_f);
-    feat_conv = mdnet_features_convX(net_conv, img, samples, opts);
+    feat_conv = gan_mdnet_features_convX(net_conv, img, samples, opts);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%     [L,N] = superpixels(img,50);
+%     feat_conv2 = gan_mdnet_features_convX(net_conv,im2double(img).*double(L), samples, opts);
+%     feat_conv = 0.5*feat_conv+0.5*feat_conv2.*feat_conv;
+%         
+%         
     
     % evaluate the candidates
     feat_fc = mdnet_features_fcX(net_fc, feat_conv, opts);
@@ -152,7 +189,35 @@ for To = 2:nFrames;
         pos_idx = 1:size(pos_examples,1);
         neg_idx = (1:size(neg_examples,1)) + size(pos_examples,1);
         
-        feat_conv = mdnet_features_convX(net_conv, img, examples, opts);
+        feat_conv = gan_mdnet_features_convX(net_conv, img, examples, opts);
+        
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%         [L,N] = superpixels(img,50);
+%         feat_conv2 = mdnet_features_convX(net_conv,im2double(img).*double(L), examples, opts);
+%         feat_conv = 0.5*feat_conv+0.5*feat_conv2.*feat_conv;
+% %         %feat_conv2 = mdnet_features_convX(net_conv,im2double(hogVisualization1), examples, opts);
+% 
+%         feat_conv = 0.5*feat_conv+0.5*feat_conv2.*feat_conv;
+
+
+%         level=graythresh(img);
+%         bw=im2bw(img,level);
+% 
+%         lowrank = bw;
+%         %lowrankgradient=lowrank;
+% %         [featureVector,hogVisualization] = extractHOGFeatures(img);
+% %         plot(hogVisualization);
+% %         saveas(gcf,'img.png');
+% %         hogVisualization1=imread('img.png');
+%         feat_conv2 = mdnet_features_convX(net_conv,im2double(img).*double(lowrank), examples, opts);
+%         %feat_conv2 = mdnet_features_convX(net_conv,im2double(hogVisualization1), examples, opts);
+
+
+
+        
         total_pos_data{To} = feat_conv(:,:,:,pos_idx);
         total_neg_data{To} = feat_conv(:,:,:,neg_idx);
         
@@ -186,7 +251,11 @@ for To = 2:nFrames;
             'maxiter',opts.maxiter_update,'learningRate',opts.learningRate_update);
         end
     end
-    
+    % 
+%         [L,N] = superpixels(img,50);
+%         feat_conv2 = mdnet_features_convX(net_conv,im2double(img).*double(L), examples, opts);
+%         feat_conv = 0.5*feat_conv+0.5*feat_conv2.*feat_conv;
+
     spf = toc(spf);
     fprintf('%f seconds\n',spf);
     
@@ -202,6 +271,11 @@ for To = 2:nFrames;
         hold off;
         drawnow;
     end
+
+    
 end
+% save result.mat result
+% save images.mat conf.imgLists
+%s = struct('bb',result,'imgList', images);
 s = struct('bb',result);
 save([ts{1},'_drone2_.mat'], 's');
